@@ -3,6 +3,10 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <set>
+#include <memory>
+#include <variant>
+#include <cassert>
 
 struct Regex;
 enum class RegexType {
@@ -13,6 +17,9 @@ struct CharRegex {
     char ch;
 
     explicit CharRegex(char ch) : ch(ch) {}
+
+    static bool is_char_transition(const Regex& regex);
+    static char get_char(const Regex& regex);
 };
 
 struct ConcatRegex {
@@ -82,6 +89,17 @@ struct Regex {
     Regex operator*(const Regex &right) const;
 
     Regex operator*();
+
+    void fill_alphabet(std::set<char>& alphabet) const;
+
+    // To use in LLDB
+    std::string print() const;
+
+    static Regex zero() { return SumRegex(); }
+    static Regex empty() { return {};}
+
+    bool is_zero() const;
+    bool is_empty() const;
 };
 
 Regex operator ""_r(const char *string, size_t size);

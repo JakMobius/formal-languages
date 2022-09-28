@@ -2,7 +2,7 @@
 #include "automaton-simplifier.hpp"
 
 
-void AutomatonSimplifier::shorten_transition(int state_index, int transition_index) {
+void AutomatonSimplifier::shorten_transition(size_t state_index, size_t transition_index) {
     auto* transition = &automaton.get_transition(state_index, transition_index);
 
     switch (transition->regex.type) {
@@ -10,7 +10,7 @@ void AutomatonSimplifier::shorten_transition(int state_index, int transition_ind
             assert(!"Char is not a long transition");
             return;
         case RegexType::Concat: {
-            int last_index = state_index;
+            size_t last_index = state_index;
 
             for (int i = 1;; i++) {
                 auto &operands = std::get<ConcatRegex>(transition->regex.value).operands;
@@ -19,7 +19,7 @@ void AutomatonSimplifier::shorten_transition(int state_index, int transition_ind
                     break;
                 }
 
-                int next_index = automaton.add_node(false);
+                size_t next_index = automaton.add_state(false);
                 automaton.add_transition(last_index, next_index, operands[i - 1]);
                 last_index = next_index;
 
@@ -53,27 +53,27 @@ void AutomatonSimplifier::shorten_transition(int state_index, int transition_ind
         case RegexType::Star:
             auto &star_regex = std::get<StarRegex>(transition->regex.value);
 
-            int target_index = transition->target_index;
-            int fictive_start = automaton.add_node(false);
-            int fictive_end = automaton.add_node(false);
+            size_t target_index = transition->target_index;
+            size_t fictive_start = automaton.add_state(false);
+            size_t fictive_end = automaton.add_state(false);
 
             automaton.add_transition(fictive_start, fictive_end, star_regex.get_operand());
             automaton.add_transition(state_index, fictive_start, Regex());
-            automaton.add_transition(fictive_end, state_index, Regex());
-            automaton.add_transition(state_index, target_index, Regex());
+            automaton.add_transition(fictive_end, fictive_start, Regex());
+            automaton.add_transition(fictive_start, target_index, Regex());
             automaton.remove_transition(state_index, transition_index);
 
             break;
     }
 }
 
-bool AutomatonSimplifier::get_long_transition(int &state, int &transition_index) const {
-    for (int i = 0; i < automaton.get_states().size(); i++) {
+bool AutomatonSimplifier::get_long_transition(size_t &state_index, size_t &transition_index) const {
+    for (size_t i = 0; i < automaton.get_states().size(); i++) {
         auto &transitions = automaton.get_states()[i].transitions;
 
-        for (int j = 0; j < transitions.size(); j++) {
-            if (transitions[j].regex.type != RegexType::Char) {
-                state = i;
+        for (size_t j = 0; j < transitions.size(); j++) {
+            if (!CharRegex::is_char_transition(transitions[j].regex)) {
+                state_index = i;
                 transition_index = j;
                 return true;
             }
@@ -82,9 +82,9 @@ bool AutomatonSimplifier::get_long_transition(int &state, int &transition_index)
     return false;
 }
 
-void AutomatonSimplifier::remove_long_transitions() {
-    int state = -1;
-    int transition_index = -1;
+void AutomatonSimplifier::simplify() {
+    size_t state = -1;
+    size_t transition_index = -1;
 
     while (get_long_transition(state, transition_index)) {
         shorten_transition(state, transition_index);
