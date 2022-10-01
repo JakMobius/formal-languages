@@ -34,7 +34,7 @@ std::ostream &operator<<(std::ostream &os, Regex const &regex) {
             bool first = true;
             for (auto &operand: std::get<SumRegex>(regex.value).operands) {
                 if (!first) {
-                    os << "+";
+                    os << " + ";
                 }
                 os << operand;
                 first = false;

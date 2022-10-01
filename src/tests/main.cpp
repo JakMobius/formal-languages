@@ -1,93 +1,92 @@
 
-#include <sstream>
-
+#include "gtest/gtest.h"
 #include "../engine/regex.hpp"
 #include "../engine/finite-automaton.hpp"
 #include "../engine/automaton-simplifier.hpp"
 #include "automaton-config-iterator.hpp"
 #include "../engine/automaton-graphviz-printer.hpp"
 
-void test_regex_1(Tester& tester) {
+TEST(test_regex, test_regex_1) {
     Regex regex = *("a"_r);
 
     FiniteAutomaton automaton(regex);
 
-    for(AutomatonConfigIterator config_iterator(automaton, tester); config_iterator; config_iterator.next()) {
-        tester.assert_automaton_accepts(automaton, "");
-        tester.assert_automaton_accepts(automaton, "a");
-        tester.assert_automaton_rejects(automaton, "b");
-        tester.assert_automaton_accepts(automaton, "aa");
-        tester.assert_automaton_rejects(automaton, "ab");
-        tester.assert_automaton_rejects(automaton, "ba");
-        tester.assert_automaton_rejects(automaton, "bb");
-        tester.assert_automaton_accepts(automaton, "aaa");
+    for(AutomatonConfigIterator config_iterator(automaton); config_iterator; config_iterator.next()) {
+        EXPECT_TRUE(automaton.accepts(""));
+        EXPECT_TRUE(automaton.accepts("a"));
+        EXPECT_FALSE(automaton.accepts("b"));
+        EXPECT_TRUE(automaton.accepts("aa"));
+        EXPECT_FALSE(automaton.accepts("ab"));
+        EXPECT_FALSE(automaton.accepts("ba"));
+        EXPECT_FALSE(automaton.accepts("bb"));
+        EXPECT_TRUE(automaton.accepts("aaa"));
     }
 }
 
-void test_regex_2(Tester& tester) {
+TEST(test_regex, test_regex_2) {
     Regex regex = "a"_r + "b"_r;
 
     FiniteAutomaton automaton(regex);
 
-    for(AutomatonConfigIterator config_iterator(automaton, tester); config_iterator; config_iterator.next()) {
-        tester.assert_automaton_rejects(automaton, "");
-        tester.assert_automaton_accepts(automaton, "a");
-        tester.assert_automaton_accepts(automaton, "b");
-        tester.assert_automaton_rejects(automaton, "c");
-        tester.assert_automaton_rejects(automaton, "aa");
-        tester.assert_automaton_rejects(automaton, "ab");
-        tester.assert_automaton_rejects(automaton, "ba");
-        tester.assert_automaton_rejects(automaton, "bb");
-        tester.assert_automaton_rejects(automaton, "aaa");
+    for(AutomatonConfigIterator config_iterator(automaton); config_iterator; config_iterator.next()) {
+        EXPECT_FALSE(automaton.accepts(""));
+        EXPECT_TRUE(automaton.accepts("a"));
+        EXPECT_TRUE(automaton.accepts("b"));
+        EXPECT_FALSE(automaton.accepts("c"));
+        EXPECT_FALSE(automaton.accepts("aa"));
+        EXPECT_FALSE(automaton.accepts("ab"));
+        EXPECT_FALSE(automaton.accepts("ba"));
+        EXPECT_FALSE(automaton.accepts("bb"));
+        EXPECT_FALSE(automaton.accepts("aaa"));
     }
 }
 
-void test_regex_3(Tester& tester) {
+TEST(test_regex, test_regex_3) {
     Regex regex = *("a"_r + "b"_r);
 
     FiniteAutomaton automaton(regex);
-    for(AutomatonConfigIterator config_iterator(automaton, tester); config_iterator; config_iterator.next()) {
-        tester.assert_automaton_accepts(automaton, "a");
-        tester.assert_automaton_accepts(automaton, "b");
-        tester.assert_automaton_rejects(automaton, "c");
-        tester.assert_automaton_accepts(automaton, "aa");
-        tester.assert_automaton_accepts(automaton, "ab");
-        tester.assert_automaton_accepts(automaton, "ba");
-        tester.assert_automaton_rejects(automaton, "bacb");
-        tester.assert_automaton_accepts(automaton, "bb");
-        tester.assert_automaton_accepts(automaton, "aaa");
+    for(AutomatonConfigIterator config_iterator(automaton); config_iterator; config_iterator.next()) {
+        EXPECT_TRUE(automaton.accepts("a"));
+        EXPECT_TRUE(automaton.accepts("b"));
+        EXPECT_FALSE(automaton.accepts("c"));
+        EXPECT_TRUE(automaton.accepts("aa"));
+        EXPECT_TRUE(automaton.accepts("ab"));
+        EXPECT_TRUE(automaton.accepts("ba"));
+        EXPECT_FALSE(automaton.accepts("bacb"));
+        EXPECT_TRUE(automaton.accepts("bb"));
+        EXPECT_TRUE(automaton.accepts("aaa"));
     }
 }
 
-void test_regex_4(Tester& tester) {
+TEST(test_regex, test_regex_4) {
     Regex regex = *("a"_r + "b"_r) * "c"_r;
 
     FiniteAutomaton automaton(regex);
 
-    for(AutomatonConfigIterator config_iterator(automaton, tester); config_iterator; config_iterator.next()) {
-        tester.assert_automaton_rejects(automaton, "a");
-        tester.assert_automaton_rejects(automaton, "b");
-        tester.assert_automaton_accepts(automaton, "c");
-        tester.assert_automaton_rejects(automaton, "ab");
-        tester.assert_automaton_rejects(automaton, "aaa");
-        tester.assert_automaton_accepts(automaton, "abbac");
-        tester.assert_automaton_rejects(automaton, "cc");
-        tester.assert_automaton_rejects(automaton, "acaca");
+    for(AutomatonConfigIterator config_iterator(automaton); config_iterator; config_iterator.next()) {
+        EXPECT_FALSE(automaton.accepts("a"));
+        EXPECT_FALSE(automaton.accepts("b"));
+        EXPECT_TRUE(automaton.accepts("c"));
+        EXPECT_FALSE(automaton.accepts("ab"));
+        EXPECT_FALSE(automaton.accepts("aaa"));
+        EXPECT_TRUE(automaton.accepts("abbac"));
+        EXPECT_FALSE(automaton.accepts("cc"));
+        EXPECT_FALSE(automaton.accepts("acaca"));
     }
 }
 
-void test_regex_5(Tester& tester) {
+TEST(test_regex, test_regex_5) {
     // The simplified automaton of this regex contains an epsilon loop,
     // which is a special case.
     Regex regex = *("a"_r + *"ab"_r);
 
     FiniteAutomaton automaton(regex);
 
-    for(AutomatonConfigIterator config_iterator(automaton, tester); config_iterator; config_iterator.next()) {
-        tester.assert_automaton_rejects(automaton, "aaaabb");
-        tester.assert_automaton_rejects(automaton, "ba");
-        tester.assert_automaton_accepts(automaton, "aaaaab");
-        tester.assert_automaton_accepts(automaton, "abaa");
+    for(AutomatonConfigIterator config_iterator(automaton); config_iterator; config_iterator.next()) {
+        EXPECT_FALSE(automaton.accepts("aaaabb"));
+        EXPECT_FALSE(automaton.accepts("ba"));
+        EXPECT_TRUE(automaton.accepts("aaaaab"));
+        EXPECT_TRUE(automaton.accepts("abaa"));
     }
 }
 
@@ -98,12 +97,12 @@ std::string regex_to_string(const Regex& regex) {
     return ss.str();
 }
 
-void test_regex_printing(Tester& tester) {
-    tester.assert_true(regex_to_string(*("a"_r + "b"_r + Regex::empty()) * "c"_r) == "((a+b+ε))*c", "Regex printing failed");
-    tester.assert_true(regex_to_string(Regex::zero()) == "()", "Regex printing failed");
+TEST(test_regex, test_regex_printing) {
+    EXPECT_EQ(regex_to_string(*("a"_r + "b"_r + Regex::empty()) * "c"_r), "((a + b + ε))*c") << "Regex printing failed";
+    EXPECT_EQ(regex_to_string(Regex::zero()), "()") << "Regex printing failed";
 }
 
-void test_graphviz_export(Tester& tester) {
+TEST(test_regex, test_regex_graphviz_export) {
     FiniteAutomaton automaton;
 
     automaton.add_state(false);
@@ -114,67 +113,53 @@ void test_graphviz_export(Tester& tester) {
     stream << AutomatonGraphvizPrinter(automaton);
     std::string string = stream.str();
 
-    tester.assert_has_substring(string, "digraph");
-    tester.assert_has_substring(string, "0 -> 1");
+    EXPECT_TRUE(string.find("digraph") != std::string_view::npos);
+    EXPECT_TRUE(string.find("0 -> 1") != std::string_view::npos);
 }
 
-void test_empty_zero_regex(Tester& tester) {
+TEST(test_regex, test_empty_zero_regex) {
     Regex zero_regex = (Regex::zero() * "a"_r) + "b"_r;
     Regex empty_regex = (Regex::empty() * "a"_r) + "b"_r;
 
     FiniteAutomaton zero_automaton(zero_regex);
 
-    for(AutomatonConfigIterator config_iterator(zero_automaton, tester); config_iterator; config_iterator.next()) {
-        tester.assert_automaton_rejects(zero_automaton, "a");
-        tester.assert_automaton_accepts(zero_automaton, "b");
-        tester.assert_automaton_rejects(zero_automaton, "");
+    for(AutomatonConfigIterator config_iterator(zero_automaton); config_iterator; config_iterator.next()) {
+        EXPECT_FALSE(zero_automaton.accepts("a"));
+        EXPECT_TRUE(zero_automaton.accepts("b"));
+        EXPECT_FALSE(zero_automaton.accepts(""));
     }
 
     FiniteAutomaton empty_automaton(zero_regex);
 
-    for(AutomatonConfigIterator config_iterator(zero_automaton, tester); config_iterator; config_iterator.next()) {
-        tester.assert_automaton_accepts(zero_automaton, "b");
-        tester.assert_automaton_rejects(zero_automaton, "a");
-        tester.assert_automaton_rejects(zero_automaton, "");
+    for(AutomatonConfigIterator config_iterator(zero_automaton); config_iterator; config_iterator.next()) {
+        EXPECT_TRUE(zero_automaton.accepts("b"));
+        EXPECT_FALSE(zero_automaton.accepts("a"));
+        EXPECT_FALSE(zero_automaton.accepts(""));
     }
 }
 
-void test_automaton_states(Tester& tester) {
+TEST(test_automaton_states, test_automaton_states) {
     FiniteAutomaton automaton(*("aab"_r + "aac"_r));
 
-    tester.assert_false(automaton.is_simple(), "Automaton should not be simple");
-    tester.assert_false(automaton.is_deterministic(), "Automaton should not be deterministic");
-    tester.assert_false(automaton.is_complete(), "Automaton should not be complete");
+    EXPECT_FALSE(automaton.is_simple()) << "Automaton should not be simple";
+    EXPECT_FALSE(automaton.is_deterministic()) << "Automaton should not be deterministic";
+    EXPECT_FALSE(automaton.is_complete()) << "Automaton should not be complete";
 
     AutomatonSimplifier(automaton).simplify();
 
-    tester.assert_true(automaton.is_simple(), "Automaton should be simple");
-    tester.assert_false(automaton.is_complete(), "Automaton should not be complete");
-    tester.assert_false(automaton.is_deterministic(), "Automaton should not be deterministic");
+    EXPECT_TRUE(automaton.is_simple()) << "Automaton should be simple";
+    EXPECT_FALSE(automaton.is_complete()) << "Automaton should not be complete";
+    EXPECT_FALSE(automaton.is_deterministic()) << "Automaton should not be deterministic";
 
     AutomatonCompleter(automaton).complete();
 
-    tester.assert_true(automaton.is_simple(), "Automaton should be simple");
-    tester.assert_true(automaton.is_complete(), "Automaton should be complete");
-    tester.assert_false(automaton.is_deterministic(), "Automaton should not be deterministic");
+    EXPECT_TRUE(automaton.is_simple()) << "Automaton should be simple";
+    EXPECT_TRUE(automaton.is_complete()) << "Automaton should be complete";
+    EXPECT_FALSE(automaton.is_deterministic()) << "Automaton should not be deterministic";
 
     automaton = AutomatonDeterminator(automaton).determine();
 
-    tester.assert_true(automaton.is_simple(), "Automaton should be simple");
-    tester.assert_true(automaton.is_complete(), "Automaton should be complete");
-    tester.assert_true(automaton.is_deterministic(), "Automaton should be deterministic");
-}
-
-int main() {
-    Tester tester;
-
-    test_automaton_states(tester);
-    test_regex_1(tester);
-    test_regex_2(tester);
-    test_regex_3(tester);
-    test_regex_4(tester);
-    test_regex_5(tester);
-    test_regex_printing(tester);
-    test_empty_zero_regex(tester);
-    test_graphviz_export(tester);
+    EXPECT_TRUE(automaton.is_simple()) << "Automaton should be simple";
+    EXPECT_TRUE(automaton.is_complete()) << "Automaton should be complete";
+    EXPECT_TRUE(automaton.is_deterministic()) << "Automaton should be deterministic";
 }
