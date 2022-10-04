@@ -15,6 +15,9 @@ std::ostream &operator<<(std::ostream &stream, const AutomatonGraphvizPrinter &p
         }
     }
     stream << ";" << std::endl;
+
+    stream << "    start [label=\"\", shape = none];" << std::endl;
+    stream << "    start -> " << printer.automaton.get_start_state_index() << ";" << std::endl;
     stream << "    node [shape = circle];" << std::endl;
     for (size_t i = 0; i < states.size(); i++) {
         for (auto &transition: states[i].transitions) {

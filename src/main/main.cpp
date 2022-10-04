@@ -9,6 +9,7 @@
 #include "../engine/automaton-collapser.hpp"
 #include "../engine/automaton-to-regex-converter.hpp"
 #include "../engine/automaton-minifier.hpp"
+#include "../engine/automaton-graphviz-printer.hpp"
 
 Regex invert_regex(const Regex& regex, const std::set<char>& alphabet = {}) {
     FiniteAutomaton automaton(regex);
@@ -21,6 +22,9 @@ Regex invert_regex(const Regex& regex, const std::set<char>& alphabet = {}) {
     automaton = AutomatonDeterminator(automaton).determine();
     automaton = AutomatonMinifier(automaton).minify();
     AutomatonInverter(automaton).invert();
+
+    std::cout << AutomatonGraphvizPrinter(automaton) << "\n";
+
     AutomatonCollapser(automaton).collapse();
 
     return AutomatonToRegexConverter(automaton).convert();
