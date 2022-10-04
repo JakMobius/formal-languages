@@ -5,6 +5,7 @@
 #include "../engine/automaton-simplifier.hpp"
 #include "automaton-config-iterator.hpp"
 #include "../engine/automaton-graphviz-printer.hpp"
+#include "../engine/automaton-to-regex-converter.hpp"
 
 TEST(test_regex, test_regex_1) {
     Regex regex = *("a"_r);
@@ -136,6 +137,34 @@ TEST(test_regex, test_empty_zero_regex) {
         EXPECT_FALSE(zero_automaton.accepts("a"));
         EXPECT_FALSE(zero_automaton.accepts(""));
     }
+}
+
+TEST(test_regex, test_regex_builder) {
+    FiniteAutomaton automaton;
+
+    size_t state_a = automaton.add_state(false);
+    size_t state_b = automaton.add_state(true);
+
+    automaton.add_transition(state_a, state_b, Regex(CharRegex('a')));
+    automaton.add_transition(state_b, state_a, Regex(CharRegex('b')));
+    automaton.add_transition(state_a, state_a, Regex(CharRegex('c')));
+    automaton.add_transition(state_b, state_b, Regex(CharRegex('d')));
+
+    Regex resulting_regex = AutomatonToRegexConverter(automaton).convert();
+
+    FiniteAutomaton resulting_automaton(resulting_regex);
+
+    AutomatonSimplifier(resulting_automaton).simplify();
+
+    EXPECT_TRUE(resulting_automaton.accepts("a"));
+    EXPECT_TRUE(resulting_automaton.accepts("ca"));
+    EXPECT_TRUE(resulting_automaton.accepts("cca"));
+    EXPECT_TRUE(resulting_automaton.accepts("cadd"));
+    EXPECT_TRUE(resulting_automaton.accepts("ccaddbccaddbcca"));
+    EXPECT_FALSE(resulting_automaton.accepts(""));
+    EXPECT_FALSE(resulting_automaton.accepts("cc"));
+
+    std::cout << resulting_regex;
 }
 
 TEST(test_automaton_states, test_automaton_states) {

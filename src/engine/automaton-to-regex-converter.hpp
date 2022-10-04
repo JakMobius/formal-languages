@@ -42,7 +42,7 @@ struct AutomatonToRegexConverter {
             }
         }
 
-        return *start_loop_regex * forward_regex * *(end_loop_regex + backward_regex * start_loop_regex * forward_regex);
+        return *start_loop_regex * forward_regex * *(end_loop_regex + backward_regex * *start_loop_regex * forward_regex);
     }
 
     Regex convert() {
