@@ -128,6 +128,12 @@ void FiniteAutomaton::remove_state(size_t state_index) {
         }
     }
 
+    if(start_state_index == state_index) {
+        start_state_index = 0;
+    } else if(start_state_index > state_index) {
+        start_state_index--;
+    }
+
     states.erase(states.begin() + state_index);
 }
 
@@ -235,4 +241,8 @@ int FiniteAutomaton::find_transition(char c, size_t source_index, size_t target_
     }
 
     return -1;
+}
+
+void FiniteAutomaton::set_start_state(size_t state) {
+    start_state_index = state;
 }

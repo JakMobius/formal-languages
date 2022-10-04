@@ -24,10 +24,18 @@ struct CharRegex {
 
 struct ConcatRegex {
     std::vector<Regex> operands{};
+
+    bool operator==(const ConcatRegex& other) const {
+        return operands == other.operands;
+    }
 };
 
 struct SumRegex {
     std::vector<Regex> operands{};
+
+    bool operator==(const SumRegex& other) const {
+        return operands == other.operands;
+    }
 };
 
 struct StarRegex {
@@ -42,6 +50,8 @@ struct StarRegex {
     StarRegex &operator=(StarRegex &&move);
 
     StarRegex &operator=(const StarRegex &copy);
+
+    bool operator==(const StarRegex& other) const;
 
     const Regex &get_operand() const { return *operand.get(); }
 
@@ -89,6 +99,8 @@ struct Regex {
     Regex operator*(const Regex &right) const;
 
     Regex operator*();
+
+    bool operator==(const Regex &other) const;
 
     void fill_alphabet(std::set<char>& alphabet) const;
 

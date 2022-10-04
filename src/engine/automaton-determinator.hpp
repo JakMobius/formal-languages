@@ -120,6 +120,7 @@ struct AutomatonDeterminator {
     }
 
     FiniteAutomaton determine() {
+        assert(!automaton.has_epsilon_transitions());
         assert(automaton.is_complete());
 
         StateSuperposition start_superposition = {{automaton.get_start_state_index()}};

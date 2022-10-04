@@ -69,6 +69,8 @@ public:
     int count_transitions(char c, size_t source_index) const;
     int find_transition(char c, size_t source_index, size_t target_index) const;
 
+    void set_start_state(size_t state);
+
 private:
     std::vector<FiniteAutomatonState> states;
     size_t start_state_index = 0;

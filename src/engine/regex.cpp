@@ -71,6 +71,10 @@ StarRegex &StarRegex::operator=(const StarRegex &copy) {
     return *this;
 }
 
+bool StarRegex::operator==(const StarRegex &other) const {
+    return *operand == *other.operand;
+}
+
 Regex &Regex::operator=(const Regex &copy) {
     type = copy.type;
 
@@ -229,6 +233,23 @@ bool Regex::is_zero() const {
 
 bool Regex::is_empty() const {
     return type == RegexType::Char && std::get<CharRegex>(value).ch == '\0';
+}
+
+bool Regex::operator==(const Regex &other) const {
+    if (type != other.type) {
+        return false;
+    }
+
+    switch (type) {
+        case RegexType::Char:
+            return std::get<CharRegex>(value).ch == std::get<CharRegex>(other.value).ch;
+        case RegexType::Concat:
+            return std::get<ConcatRegex>(value) == std::get<ConcatRegex>(other.value);
+        case RegexType::Sum:
+            return std::get<SumRegex>(value) == std::get<SumRegex>(other.value);
+        case RegexType::Star:
+            return std::get<StarRegex>(value) == std::get<StarRegex>(other.value);
+    }
 }
 
 char CharRegex::get_char(const Regex &regex) {
