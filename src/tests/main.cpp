@@ -163,3 +163,25 @@ TEST(test_automaton_states, test_automaton_states) {
     EXPECT_TRUE(automaton.is_complete()) << "Automaton should be complete";
     EXPECT_TRUE(automaton.is_deterministic()) << "Automaton should be deterministic";
 }
+
+TEST(test_automaton_states, test_automaton_eps_remove_1) {
+    FiniteAutomaton automaton;
+
+    size_t state_a = automaton.add_state(false);
+    size_t state_b = automaton.add_state(false);
+    size_t state_c = automaton.add_state(true);
+
+    automaton.add_transition(state_a, state_b, Regex(CharRegex('a')));
+    automaton.add_transition(state_b, state_c, Regex::empty());
+    automaton.add_transition(state_c, state_a, Regex::empty());
+
+    EXPECT_TRUE(automaton.is_simple());
+
+    EpsilonRemover(automaton).simplify();
+
+    EXPECT_TRUE(!automaton.has_epsilon_transitions());
+    EXPECT_FALSE(automaton.accepts(""));
+    EXPECT_FALSE(automaton.accepts("b"));
+    EXPECT_TRUE(automaton.accepts("a"));
+    EXPECT_TRUE(automaton.accepts("aaa"));
+}
