@@ -57,30 +57,41 @@ public:
         }
     }
 
-    bool remove_epsilon_loop(size_t state_index) {
-        std::vector<size_t> visited_states;
-        std::vector<size_t> current_states = {state_index};
-        while (!current_states.empty()) {
-            size_t current_state_index = current_states.back();
-            current_states.pop_back();
-            visited_states.push_back(current_state_index);
-            for (auto &transition: automaton.get_states()[current_state_index].transitions) {
-                if (CharRegex::is_char_transition(transition.regex) &&
-                    std::get<CharRegex>(transition.regex.value).ch == '\0') {
+    bool remove_epsilon_loop_dfs(size_t state_index, std::vector<size_t>& stack, std::vector<bool> &stack_map) {
+        stack_map[state_index] = true;
+        stack.push_back(state_index);
 
-                    auto it = std::find(visited_states.begin(), visited_states.end(), transition.target_index);
+        for(auto& transition : automaton.get_states()[state_index].transitions) {
+            if (transition.regex.is_empty()) {
+                if (stack_map[transition.target_index]) {
+                    // Found a loop
+                    std::vector<size_t> loop;
 
-                    if (it == visited_states.end()) {
-                        current_states.push_back(transition.target_index);
-                    } else {
-                        visited_states.erase(visited_states.begin(), it);
-                        merge_states(visited_states);
-                        return true;
+                    for (int i = stack.size() - 1; i >= 0; i--) {
+                        loop.push_back(stack[i]);
+                        if (stack[i] == transition.target_index) {
+                            break;
+                        }
                     }
+                    merge_states(loop);
+                    return true;
+                } else if (remove_epsilon_loop_dfs(transition.target_index, stack, stack_map)) {
+                    return true;
                 }
             }
         }
+
+        stack_map[state_index] = false;
+        stack.pop_back();
         return false;
+    }
+
+    bool remove_epsilon_loop(size_t state_index) {
+        // Search for epsilon loops with DFS
+
+        std::vector<bool> visited(automaton.get_states().size(), false);
+        std::vector<size_t> stack;
+        return remove_epsilon_loop_dfs(state_index, stack, visited);
     }
 
     bool remove_epsilon_transition(size_t state_index, size_t transition_index) {

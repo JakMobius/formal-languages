@@ -7,6 +7,7 @@
 #include "../engine/automaton-optimizer.hpp"
 #include "../engine/automaton-completer.hpp"
 #include "../engine/automaton-determinator.hpp"
+#include "../engine/automaton-graphviz-printer.hpp"
 
 class AutomatonConfigIterator {
 public:
@@ -47,7 +48,7 @@ public:
         }
     }
 
-    explicit operator bool() {
+    explicit operator bool() const {
         return current_config <= max_configs;
     }
 

@@ -10,6 +10,11 @@
 #include "../engine/automaton-inverter.hpp"
 #include "../engine/automaton-collapser.hpp"
 
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}
+
 TEST(test_regex, test_regex_1) {
     Regex regex = *("a"_r);
 
@@ -94,6 +99,18 @@ TEST(test_regex, test_regex_5) {
     }
 }
 
+TEST(test_regex, test_regex_6) {
+    // This regex has been found to cause a bug in the epsilon loop detection code.
+    Regex regex = (*"ab"_r) * (*"b"_r) + *(("a"_r + "b"_r) * ("a"_r + "b"_r));
+
+    FiniteAutomaton automaton(regex);
+
+    for(AutomatonConfigIterator config_iterator(automaton); config_iterator; config_iterator.next()) {
+        EXPECT_TRUE(automaton.accepts("abb"));
+        EXPECT_TRUE(automaton.accepts("abab"));
+        EXPECT_FALSE(automaton.accepts("aab"));
+    }
+}
 
 std::string regex_to_string(const Regex& regex) {
     std::stringstream ss;
@@ -166,8 +183,6 @@ TEST(test_regex, test_regex_builder) {
     EXPECT_TRUE(resulting_automaton.accepts("ccaddbccaddbcca"));
     EXPECT_FALSE(resulting_automaton.accepts(""));
     EXPECT_FALSE(resulting_automaton.accepts("cc"));
-
-    std::cout << resulting_regex;
 }
 
 TEST(test_automaton_states, test_automaton_states) {
@@ -178,10 +193,12 @@ TEST(test_automaton_states, test_automaton_states) {
     EXPECT_FALSE(automaton.is_complete()) << "Automaton should not be complete";
 
     AutomatonSimplifier(automaton).simplify();
+    EpsilonRemover(automaton).simplify();
 
     EXPECT_TRUE(automaton.is_simple()) << "Automaton should be simple";
     EXPECT_FALSE(automaton.is_complete()) << "Automaton should not be complete";
     EXPECT_FALSE(automaton.is_deterministic()) << "Automaton should not be deterministic";
+    EXPECT_FALSE(automaton.has_epsilon_transitions()) << "Automaton should not have any epsilon transitions";
 
     AutomatonCompleter(automaton).complete();
 
@@ -228,8 +245,6 @@ TEST(test_automaton_minify, test_automaton_minify_1) {
     AutomatonCompleter(automaton).complete();
     automaton = AutomatonDeterminator(automaton).determine();
     automaton = AutomatonMinifier(automaton).minify();
-
-    std::cout << AutomatonGraphvizPrinter(automaton) << std::endl;
 
     EXPECT_TRUE(automaton.is_simple());
     EXPECT_TRUE(automaton.is_deterministic());

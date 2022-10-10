@@ -102,7 +102,6 @@ struct AutomatonDeterminator {
 
                 auto it = found_superpositions.find(superposition);
                 if (it == found_superpositions.end()) {
-
                     StateSuperposition new_superposition = superposition;
                     new_superposition.id = found_superpositions.size();
                     found_transitions.push_back({state_superposition.id, new_superposition.id, ch});
