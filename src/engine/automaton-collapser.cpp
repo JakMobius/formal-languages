@@ -1,0 +1,3 @@
+
+#include "automaton-collapser.hpp"
+
