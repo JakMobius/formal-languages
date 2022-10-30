@@ -100,6 +100,8 @@ struct Regex {
 
     Regex operator*();
 
+    Regex operator+();
+
     bool operator==(const Regex &other) const;
 
     void fill_alphabet(std::set<char>& alphabet) const;

@@ -194,6 +194,10 @@ Regex Regex::operator*() {
     return {StarRegex(Regex(*this))};
 }
 
+Regex Regex::operator+() {
+    return (*(*this)) + *this;
+}
+
 void Regex::fill_alphabet(std::set<char> &alphabet) const {
     switch (type) {
         case RegexType::Char: {
