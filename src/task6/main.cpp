@@ -33,27 +33,29 @@ Regex parse_regex_invert_polish_notation(const std::string& regex) {
             stack.pop();
             Regex r2 = stack.top();
             stack.pop();
-            stack.push(r1 * r2);
+            stack.push(r2 * r1);
         }
     }
     return stack.top();
 }
 
-bool is_final_state_reachable(FiniteAutomaton& automaton, size_t start_index) {
+int reach_final_state(FiniteAutomaton& automaton, size_t start_index) {
     if(automaton.get_states()[start_index].is_final) {
-        return true;
+        return 0;
     }
 
     std::set<size_t> current_states;
     current_states.insert(start_index);
+    int steps = 0;
 
     while(true) {
+        steps++;
         std::set<size_t> next_states;
         for(auto state_index : current_states) {
             auto& state = automaton.get_states()[state_index];
             for(auto& transition : state.transitions) {
                 if(automaton.get_states()[transition.target_index].is_final) {
-                    return true;
+                    return steps;
                 }
                 next_states.insert(transition.target_index);
             }
@@ -65,7 +67,24 @@ bool is_final_state_reachable(FiniteAutomaton& automaton, size_t start_index) {
         }
     };
 
-    return false;
+    return -1;
+}
+
+Regex inverse_regex(const Regex& regex) {
+    switch (regex.type) {
+        case RegexType::Char:
+        case RegexType::Star:
+        case RegexType::Sum:
+            return regex;
+        case RegexType::Concat: {
+            auto& value = std::get<ConcatRegex>(regex.value);
+            ConcatRegex reversed_regex;
+            for(int i = value.operands.size() - 1; i >= 0; i--) {
+                reversed_regex.operands.push_back(inverse_regex(value.operands[i]));
+            }
+            return reversed_regex;
+        }
+    }
 }
 
 int main(int argc, const char** argv) {
@@ -78,7 +97,7 @@ int main(int argc, const char** argv) {
     char ch = argv[2][0];
     int k = std::stoi(argv[3]);
 
-    Regex regex = parse_regex_invert_polish_notation(input_string);
+    Regex regex = inverse_regex(parse_regex_invert_polish_notation(input_string));
 
     FiniteAutomaton automaton(regex);
     automaton.extend_alphabet({'a', 'b', 'c'});
@@ -89,16 +108,23 @@ int main(int argc, const char** argv) {
 
     size_t current_state = automaton.get_start_state_index();
 
+    int word_size = 0;
+
     for(int i = 0; i < k; i++) {
         int transition = automaton.find_transition(ch, current_state);
         current_state = automaton.get_transition(current_state, transition).target_index;
+        word_size++;
     }
 
     // Determine whether the final state is reachable from the current state
 
-    if(is_final_state_reachable(automaton, current_state)) {
-        std::cout << "YES\n";
-    } else {
+    int steps = reach_final_state(automaton, current_state);
+
+    if(steps == -1) {
         std::cout << "NO\n";
+        return 0;
     }
+
+    std::cout << steps + word_size << "\n";
+    return 0;
 }
