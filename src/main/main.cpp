@@ -32,6 +32,50 @@ Regex invert_regex(const Regex& regex, const std::set<char>& alphabet = {}) {
     return AutomatonToRegexConverter(automaton).convert();
 }
 
+// Print regex in reverse polish notation
+void print_regex(const Regex& regex) {
+    if (regex.type == RegexType::Char) {
+        auto& char_regex = std::get<CharRegex>(regex.value);
+
+        if (char_regex.ch == '\0') {
+            std::cout << "1";
+        } else {
+            std::cout << char_regex.ch;
+        }
+    } else if (regex.type == RegexType::Star) {
+        auto& star_value = std::get<StarRegex>(regex.value);
+
+        auto& inner_regex = *star_value.operand;
+        print_regex(inner_regex);
+
+        std::cout << "*";
+    } else if (regex.type == RegexType::Concat) {
+        auto& concat_value = std::get<ConcatRegex>(regex.value);
+
+        bool first = true;
+        for (auto& operand : concat_value.operands) {
+            print_regex(operand);
+            if(first) {
+                first = false;
+            } else {
+                std::cout << ".";
+            }
+        }
+    } else if (regex.type == RegexType::Sum) {
+        auto& sum_value = std::get<SumRegex>(regex.value);
+
+        bool first = true;
+        for (auto& operand : sum_value.operands) {
+            print_regex(operand);
+            if(first) {
+                first = false;
+            } else {
+                std::cout << "+";
+            }
+        }
+    }
+}
+
 int main() {
 
 //    Regex regex = *("ab"_r + "ba"_r) * (Regex() + "a"_r + "ba"_r);
@@ -53,60 +97,65 @@ int main() {
     //FiniteAutomaton automaton("a"_r * *"a"_r * *("a"_r + "ba"_r) * *"b"_r * ("b"_r+"a"_r));
 //    FiniteAutomaton automaton(*"b"_r * *"a"_r * "bb"_r * (*"a"_r + "aa"_r));
 
-    Regex reg = "rax"_r + "rbx"_r + "rcx"_r + "rdx"_r + "rsi"_r + "rdi"_r + "rbp"_r + "rsp"_r + "r8"_r + "r9"_r + "r10"_r + "r11"_r + "r12"_r + "r13"_r + "r14"_r + "r15"_r;
-    Regex digit = "0"_r + "1"_r + "2"_r + "3"_r + "4"_r + "5"_r + "6"_r + "7"_r + "8"_r + "9"_r;
-    Regex number = digit + *digit;
-    Regex whitespace = " "_r + "\n"_r;
+//    Regex reg = "rax"_r + "rbx"_r + "rcx"_r + "rdx"_r + "rsi"_r + "rdi"_r + "rbp"_r + "rsp"_r + "r8"_r + "r9"_r + "r10"_r + "r11"_r + "r12"_r + "r13"_r + "r14"_r + "r15"_r;
+//    Regex digit = "0"_r + "1"_r + "2"_r + "3"_r + "4"_r + "5"_r + "6"_r + "7"_r + "8"_r + "9"_r;
+//    Regex number = digit + *digit;
+//    Regex whitespace = " "_r + "\n"_r;
+//
+//    Regex no_register_instructions = "nop"_r;
+//    Regex one_register_instructions = "push"_r + "pop"_r + "inc"_r + "dec"_r + "neg"_r + "not"_r + "mul"_r + "div"_r + "call"_r + "jmp"_r + "jz"_r + "jnz"_r + "je"_r + "jne"_r + "jg"_r + "jge"_r + "jl"_r + "jle"_r + "ja"_r + "jae"_r + "jb"_r + "jbe"_r + "ret"_r + "leave"_r;
+//    Regex two_registers_instructions = "mov"_r + "add"_r + "sub"_r + "and"_r + "or"_r + "xor"_r + "cmp"_r + "test"_r + "imul"_r + "idiv"_r;
+//    Regex register_number_instructions = "mov"_r + "add"_r + "sub"_r + "and"_r + "or"_r + "xor"_r + "cmp"_r + "test"_r + "imul"_r + "idiv"_r;
+//
+//    Regex program =
+//        *(
+//            *whitespace
+//            + (
+//                no_register_instructions
+//                + *whitespace
+//                + *number
+//            )
+//            + *whitespace
+//            + *(
+//                +whitespace
+//                + (
+//                    one_register_instructions
+//                    + *whitespace
+//                    + reg
+//                )
+//                + *whitespace
+//                + *(
+//                    +whitespace
+//                    + (
+//                        two_registers_instructions
+//                        + *whitespace
+//                        + reg
+//                        + *whitespace
+//                        + reg
+//                    )
+//                    + *whitespace
+//                    + *(
+//                        +whitespace
+//                        + (
+//                            register_number_instructions
+//                            + *whitespace
+//                            + reg
+//                            + *whitespace
+//                            + number
+//                        )
+//                        + *whitespace
+//                    )
+//                )
+//            )
+//        );
+//
+//    std::cout << program << "\n";
 
-    Regex no_register_instructions = "nop"_r;
-    Regex one_register_instructions = "push"_r + "pop"_r + "inc"_r + "dec"_r + "neg"_r + "not"_r + "mul"_r + "div"_r + "call"_r + "jmp"_r + "jz"_r + "jnz"_r + "je"_r + "jne"_r + "jg"_r + "jge"_r + "jl"_r + "jle"_r + "ja"_r + "jae"_r + "jb"_r + "jbe"_r + "ret"_r + "leave"_r;
-    Regex two_registers_instructions = "mov"_r + "add"_r + "sub"_r + "and"_r + "or"_r + "xor"_r + "cmp"_r + "test"_r + "imul"_r + "idiv"_r;
-    Regex register_number_instructions = "mov"_r + "add"_r + "sub"_r + "and"_r + "or"_r + "xor"_r + "cmp"_r + "test"_r + "imul"_r + "idiv"_r;
+    Regex r = "b"_r * *(*"ac"_r + "c"_r) * "bb"_r * ("b"_r + "a"_r) * "b"_r * *"c"_r;
 
-    Regex program =
-        *(
-            *whitespace
-            + (
-                no_register_instructions
-                + *whitespace
-                + *number
-            )
-            + *whitespace
-            + *(
-                +whitespace
-                + (
-                    one_register_instructions
-                    + *whitespace
-                    + reg
-                )
-                + *whitespace
-                + *(
-                    +whitespace
-                    + (
-                        two_registers_instructions
-                        + *whitespace
-                        + reg
-                        + *whitespace
-                        + reg
-                    )
-                    + *whitespace
-                    + *(
-                        +whitespace
-                        + (
-                            register_number_instructions
-                            + *whitespace
-                            + reg
-                            + *whitespace
-                            + number
-                        )
-                        + *whitespace
-                    )
-                )
-            )
-        );
+    r = r * r * r;
 
-    std::cout << program << "\n";
-
+    print_regex(r);
 //    FiniteAutomaton automaton(program);
 
 //    int state_start = automaton.add_state(true);
