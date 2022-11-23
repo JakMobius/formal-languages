@@ -11,31 +11,84 @@
 #include "../engine/automaton-minifier.hpp"
 #include "../engine/automaton-determinator.hpp"
 
+/*
+ * Задача 6:
+ *
+ * Входные данные:
+ * - регулярное выражение, заданное в виде строки в обратной польской записи
+ * - символ ch
+ * - число k
+ *
+ * Выходные данные:
+ * - определить, принимает ли автомат, построенный по данному регулярному выражению, слово с суффиксом ch^k,
+ * и если принимает, то вывести минимальную длину такого слова.
+ *
+ * Алгоритм решения:
+ * 1. Прочитать регулярное выражение из строки в обратной польской записи
+ *
+ * 2. Инвертировать регулярное выражение (развернуть слова из языка, принимаемого регулярным выражением)
+ *  - *: Теперь задача сводится к поиску наикратчайшего слова с префиксом ch^k
+ *
+ * 3. Построить ПДКА по данному регулярному выражению.
+ *
+ * 4. Перейти в ПДКА k раз по символу ch.
+ *
+ * 5. Найти кратчайший путь от текущего состояния до финального, и сложить это число с k - это и будет ответом.
+ *
+ * 6. Если пути нет, то ответ -1.
+ *
+ * Доказательство корректности:
+ * Пусть в языке L заданного регулярным выражением есть наикратчайшее слово u' с суффиксом ch^k.
+ * Тогда в языке, состоящем из развёрнутых слов есть наикратчайшее слово v' = rev(v') c префиксом ch^k.
+ * Иными словами, v' = ch^k * m. Тогда, перейдя в ПДКА k раз по символу ch, мы попадём в состояние, из которого
+ * финальное состояние достижимо по слову m. Таким образом, ответом алгоритма будет k + |m| = |rev(v')| = |u'|.
+ *
+ * Пусть в языке L заданного регулярным выражением нет слова с суффиксом ch^k. Тогда в языке, состоящем из развёрнутых слов
+ * нет слова с префиксом ch^k. Таким образом, перейдя в ПДКА k раз по символу ch, мы попадём в состояние, из которого
+ * финальное состояние не достижимо. Таким образом, ответом алгоритма будет -1.
+ *
+ * Асимптотика:
+ * 1. Чтение регулярного выражения из строки в обратной польской записи: O(|s|)
+ * 2. Инвертирование регулярного выражения: O(|s|)
+ * 3. Построение ПДКА по данному регулярному выражению: O(2^|s|)
+ * 4. Переход в ПДКА k раз по символу ch: O(k)
+ * 5. Поиск кратчайшего пути в ПДКА: O(2^|s|)
+ *
+ * Итого: O(2^|s|)
+ */
+
 namespace Task6 {
 
     Regex parse_regex_invert_polish_notation(const std::string &regex) {
-        std::stack <Regex> stack;
+        std::stack<Regex> stack;
         for (char i: regex) {
-            if (i == 'a' || i == 'b' || i == 'c') {
-                stack.push(Regex(CharRegex(i)));
-            } else if (i == '*') {
-                Regex r = stack.top();
-                stack.pop();
-                stack.push(*r);
-            } else if (i == '+') {
-                Regex r1 = stack.top();
-                stack.pop();
-                Regex r2 = stack.top();
-                stack.pop();
-                stack.push(r1 + r2);
-            } else if (i == '1') {
-                stack.push(Regex());
-            } else if (i == '.') {
-                Regex r1 = stack.top();
-                stack.pop();
-                Regex r2 = stack.top();
-                stack.pop();
-                stack.push(r2 * r1);
+            switch (i) {
+                case 'a':
+                case 'b':
+                case 'c':
+                    stack.push(Regex(CharRegex(i)));
+                    break;
+                case '*': {
+                    Regex r1 = stack.top();
+                    stack.pop();
+                    Regex r2 = stack.top();
+                    stack.pop();
+                    stack.push(r1 + r2);
+                    break;
+                }
+                case '1': {
+                    stack.push(Regex());
+                }
+                case '.': {
+                    Regex r3 = stack.top();
+                    stack.pop();
+                    Regex r4 = stack.top();
+                    stack.pop();
+                    stack.push(r3 * r4);
+                    break;
+                }
+                default:
+                    break;
             }
         }
         return stack.top();
@@ -46,13 +99,14 @@ namespace Task6 {
             return 0;
         }
 
-        std::set <size_t> current_states;
+        std::set<size_t> current_states;
         current_states.insert(start_index);
         int steps = 0;
+        size_t old_states_size = 0;
 
-        while (true) {
+        while(current_states.size() != old_states_size) {
             steps++;
-            std::set <size_t> next_states;
+            std::set<size_t> next_states;
             for (auto state_index: current_states) {
                 auto &state = automaton.get_states()[state_index];
                 for (auto &transition: state.transitions) {
@@ -62,11 +116,8 @@ namespace Task6 {
                     next_states.insert(transition.target_index);
                 }
             }
-            size_t old_states_size = current_states.size();
+            old_states_size = current_states.size();
             current_states.insert(next_states.begin(), next_states.end());
-            if (current_states.size() == old_states_size) {
-                break;
-            }
         };
 
         return -1;

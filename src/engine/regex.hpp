@@ -20,6 +20,10 @@ struct CharRegex {
 
     static bool is_char_transition(const Regex& regex);
     static char get_char(const Regex& regex);
+
+    bool operator==(const CharRegex& other) const {
+        return ch == other.ch;
+    }
 };
 
 struct ConcatRegex {
