@@ -71,6 +71,8 @@ public:
 
     void set_start_state(size_t state);
 
+    size_t get_states_count();
+
 private:
     std::vector<FiniteAutomatonState> states;
     size_t start_state_index = 0;
