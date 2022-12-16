@@ -77,3 +77,16 @@ struct GrammarSymbol {
         return !(*this == other);
     }
 };
+
+namespace std {
+    template<>
+    struct hash<GrammarSymbol> {
+        size_t operator()(const GrammarSymbol& symbol) const {
+            if(symbol.type == SymbolType::terminal) {
+                return std::hash<Terminal>()(std::get<Terminal>(symbol.value));
+            } else {
+                return std::hash<NonTerminal>()(std::get<NonTerminal>(symbol.value));
+            }
+        }
+    };
+}

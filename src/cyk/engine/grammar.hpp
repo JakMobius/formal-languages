@@ -37,6 +37,22 @@ struct GrammarRule {
     }
 };
 
+namespace std {
+    template<>
+    struct hash<GrammarRule> {
+        std::size_t operator()(const GrammarRule& rule) const {
+            std::size_t result = 0;
+            for (const GrammarSymbol& symbol : rule.left) {
+                result ^= std::hash<GrammarSymbol>()(symbol);
+            }
+            for (const GrammarSymbol& symbol : rule.right) {
+                result ^= std::hash<GrammarSymbol>()(symbol);
+            }
+            return result;
+        }
+    };
+}
+
 class Grammar {
     std::vector<GrammarRule> rules;
     std::unordered_set<char> alphabet;

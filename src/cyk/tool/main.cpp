@@ -50,3 +50,21 @@ int main(int argc, const char *argv[]) {
 
     return 0;
 }
+
+
+//int main() {
+//    std::stringstream input;
+//
+//    input << "<S> ::= c<T>" << std::endl;
+//    input << "<S> ::= a" << std::endl;
+//    input << "<T> ::= <U>cb" << std::endl;
+//    input << "<T> ::= " << std::endl;
+//    input << "<U> ::= <S>a" << std::endl;
+//    input << "<U> ::= b" << std::endl;
+//
+//    Grammar grammar = GrammarParser().parse(input);
+//
+//    grammar = KNFConverter(grammar).convert();
+//
+//    std::cout << GrammarPrinter(grammar) << std::endl;
+//}
