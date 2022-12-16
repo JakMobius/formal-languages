@@ -246,3 +246,7 @@ int FiniteAutomaton::find_transition(char c, size_t source_index, size_t target_
 void FiniteAutomaton::set_start_state(size_t state) {
     start_state_index = state;
 }
+
+size_t FiniteAutomaton::get_states_count() {
+    return states.size();
+}

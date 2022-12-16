@@ -78,40 +78,19 @@ bool StarRegex::operator==(const StarRegex &other) const {
 Regex &Regex::operator=(const Regex &copy) {
     type = copy.type;
 
-    switch (type) {
-        case RegexType::Char:
-            value = CharRegex(std::get<CharRegex>(copy.value).ch);
-            break;
-        case RegexType::Concat:
-            value = ConcatRegex(std::get<ConcatRegex>(copy.value));
-            break;
-        case RegexType::Sum:
-            value = SumRegex(std::get<SumRegex>(copy.value));
-            break;
-        case RegexType::Star:
-            value = StarRegex(std::get<StarRegex>(copy.value));
-            break;
-    }
+    std::visit([this]<typename T>(T &arg) {
+        value = T(arg);
+    }, copy.value);
+
     return *this;
 }
 
 Regex &Regex::operator=(Regex &&move) noexcept {
     type = move.type;
 
-    switch (type) {
-        case RegexType::Char:
-            value = CharRegex(std::get<CharRegex>(std::move(move.value)).ch);
-            break;
-        case RegexType::Concat:
-            value = ConcatRegex(std::get<ConcatRegex>(std::move(move.value)));
-            break;
-        case RegexType::Sum:
-            value = SumRegex(std::get<SumRegex>(std::move(move.value)));
-            break;
-        case RegexType::Star:
-            value = StarRegex(std::get<StarRegex>(std::move(move.value)));
-            break;
-    }
+    std::visit([this]<typename T>(T &&arg) {
+        value = T(std::forward<T>(arg));
+    }, std::move(move.value));
 
     return *this;
 }
@@ -194,7 +173,12 @@ Regex Regex::operator*() {
     return {StarRegex(Regex(*this))};
 }
 
+Regex Regex::operator+() {
+    return (*(*this)) + *this;
+}
+
 void Regex::fill_alphabet(std::set<char> &alphabet) const {
+
     switch (type) {
         case RegexType::Char: {
             char c = std::get<CharRegex>(value).ch;
@@ -240,16 +224,10 @@ bool Regex::operator==(const Regex &other) const {
         return false;
     }
 
-    switch (type) {
-        case RegexType::Char:
-            return std::get<CharRegex>(value).ch == std::get<CharRegex>(other.value).ch;
-        case RegexType::Concat:
-            return std::get<ConcatRegex>(value) == std::get<ConcatRegex>(other.value);
-        case RegexType::Sum:
-            return std::get<SumRegex>(value) == std::get<SumRegex>(other.value);
-        case RegexType::Star:
-            return std::get<StarRegex>(value) == std::get<StarRegex>(other.value);
-    }
+    return std::visit([&other]<typename T>(T &&arg) {
+        using U = std::remove_cvref_t<T>;
+        return arg == std::get<U>(other.value);
+    }, value);
 }
 
 char CharRegex::get_char(const Regex &regex) {
